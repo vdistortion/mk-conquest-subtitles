@@ -1,0 +1,44 @@
+name: Update Latest Release
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get current date and time
+        id: datetime
+        run: echo "now=$(date +'%Y-%m-%d %H:%M:%S')" >> $GITHUB_OUTPUT
+
+      - name: Create archive of subtitles
+        run: |
+          zip -r mk_conquest_subtitles.zip . -i "*.srt"
+
+      - name: Prepare Release Notes
+        run: |
+          cat README.md > release_notes.md
+
+      - name: Delete old "latest" release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release delete latest --yes --cleanup-tag || true
+
+      - name: Create New Latest Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create latest \
+            --title "Обновление: ${{ steps.datetime.outputs.now }}" \
+            --notes-file release_notes.md \
+            --target main \
+            mk_conquest_subtitles.zip
