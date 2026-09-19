@@ -4,6 +4,11 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
+
+concurrency:
+  group: latest-release
+  cancel-in-progress: true
 
 jobs:
   release:
@@ -17,28 +22,37 @@ jobs:
 
       - name: Get current date and time
         id: datetime
-        run: echo "now=$(date +'%Y-%m-%d %H:%M:%S')" >> $GITHUB_OUTPUT
+        run: echo "now=$(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> "$GITHUB_OUTPUT"
 
       - name: Create archive of subtitles
         run: |
-          zip -r mk_conquest_subtitles.zip . -i "*.srt"
+          zip -r mk_conquest_subtitles.zip "Mortal Kombat - Conquest" -i "*.srt"
 
       - name: Prepare Release Notes
         run: |
-          cat README.md > release_notes.md
+          cat > release_notes.md <<'EOF'
+          Актуальная версия русских субтитров ко всем 22 сериям Mortal Kombat: Conquest.
 
-      - name: Delete old "latest" release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release delete latest --yes --cleanup-tag || true
+          - Формат: SRT
+          - Кодировка: UTF-8 без BOM
+          - Архив содержит только файлы субтитров
 
-      - name: Create New Latest Release
+          Полное описание и обратная связь: https://github.com/vdistortion/mk-conquest-subtitles#readme
+          EOF
+
+      - name: Update "latest" release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release create latest \
-            --title "Обновление: ${{ steps.datetime.outputs.now }}" \
-            --notes-file release_notes.md \
-            --target main \
-            mk_conquest_subtitles.zip
+          if gh release view latest >/dev/null 2>&1; then
+            gh release upload latest mk_conquest_subtitles.zip --clobber
+            gh release edit latest \
+              --title "Актуальная версия: ${{ steps.datetime.outputs.now }}" \
+              --notes-file release_notes.md
+          else
+            gh release create latest \
+              --title "Актуальная версия: ${{ steps.datetime.outputs.now }}" \
+              --notes-file release_notes.md \
+              --target main \
+              mk_conquest_subtitles.zip
+          fi

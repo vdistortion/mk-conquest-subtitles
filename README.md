@@ -21,5 +21,8 @@
 ## Использование
 Поместите файлы субтитров `.srt` в папку с соответствующими видеофайлами серий. Убедитесь, что их названия совпадают.
 
+## Скачать
+[Скачать актуальный архив субтитров](https://github.com/vdistortion/mk-conquest-subtitles/releases/download/latest/mk_conquest_subtitles.zip)
+
 ## Обратная связь
 Если вы заметили неточность в тексте или синхронизации, пожалуйста, **[создайте issue](https://github.com/vdistortion/mk-conquest-subtitles/issues)** в этом репозитории.
